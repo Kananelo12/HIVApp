@@ -8,6 +8,8 @@ export const screenings = pgTable("screenings", {
   riskFactors: text("risk_factors").array().notNull(),
   riskLevel: text("risk_level").notNull(),
   recommendations: text("recommendations").notNull(),
+  severityAnalysis: text("severity_analysis").notNull(),
+  severityScore: integer("severity_score").notNull(),
 });
 
 export const insertScreeningSchema = createInsertSchema(screenings).pick({
@@ -15,6 +17,8 @@ export const insertScreeningSchema = createInsertSchema(screenings).pick({
   riskFactors: true,
   riskLevel: true,
   recommendations: true,
+  severityAnalysis: true,
+  severityScore: true,
 });
 
 export type InsertScreening = z.infer<typeof insertScreeningSchema>;

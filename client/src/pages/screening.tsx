@@ -14,6 +14,8 @@ import { apiRequest } from "@/lib/queryClient";
 const formSchema = z.object({
   symptoms: z.array(z.string()).min(0),
   riskFactors: z.array(z.string()).min(0),
+  severityAnalysis: z.string().optional(), // Added for severity analysis
+  severityScore: z.number().optional(), // Added for severity score
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -28,10 +30,12 @@ export default function Screening() {
     defaultValues: {
       symptoms: [],
       riskFactors: [],
+      severityAnalysis: "", // Added for severity analysis
+      severityScore: 0, // Added for severity score
     },
   });
 
-  const { setValue, watch } = form;
+  const { setValue, watch, getValues } = form;
   const symptoms = watch("symptoms");
   const riskFactors = watch("riskFactors");
 
@@ -57,11 +61,15 @@ export default function Screening() {
       const riskLevel = calculateRiskLevel(data);
       console.log("Risk level:", riskLevel); // Debug log
       const recommendations = getRecommendations(riskLevel);
+      const severityAnalysis = "This is a placeholder for AI-generated severity analysis."; // Placeholder
+      const severityScore = 0.7; // Placeholder
 
       await apiRequest("POST", "/api/screening", {
         ...data,
         riskLevel,
         recommendations,
+        severityAnalysis,
+        severityScore,
       });
 
       setResults(recommendations);
@@ -164,9 +172,25 @@ export default function Screening() {
         <Card>
           <CardContent className="pt-6">
             <h2 className="mb-6 text-2xl font-semibold">Results</h2>
-            <Alert>
-              <AlertDescription>{results}</AlertDescription>
-            </Alert>
+            <div className="space-y-4">
+              <Alert>
+                <AlertDescription>{results}</AlertDescription>
+              </Alert>
+
+              {getValues().severityAnalysis && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold mb-2">AI Severity Analysis</h3>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="mb-2">{getValues().severityAnalysis}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Severity Score:</span>
+                      <Progress value={getValues().severityScore * 10} className="w-64" />
+                      <span>{getValues().severityScore}/10</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <Button className="mt-6" onClick={() => {
               form.reset();
               setStep(1);

@@ -2,14 +2,29 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { insertScreeningSchema } from "@shared/schema";
+import { analyzeSeverity } from "./lib/openai";
 
 export async function registerRoutes(app: Express) {
   app.post("/api/screening", async (req, res) => {
     try {
-      const data = insertScreeningSchema.parse(req.body);
+      const { symptoms, riskFactors, riskLevel, recommendations } = req.body;
+
+      // Get AI-powered severity analysis
+      const severityResult = await analyzeSeverity(symptoms, riskFactors);
+
+      const data = insertScreeningSchema.parse({
+        symptoms,
+        riskFactors,
+        riskLevel,
+        recommendations,
+        severityAnalysis: severityResult.analysis,
+        severityScore: severityResult.score
+      });
+
       const result = await storage.createScreening(data);
       res.json(result);
     } catch (error) {
+      console.error("Screening error:", error);
       res.status(400).json({ error: "Invalid screening data" });
     }
   });
