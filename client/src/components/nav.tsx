@@ -7,6 +7,7 @@ const links = [
   { href: "/screening", label: "Screening" },
   { href: "/education", label: "Education" },
   { href: "/resources", label: "Resources" },
+  { href: "/chatbot", label: "Chat Assistant" },
 ];
 
 export default function Nav() {

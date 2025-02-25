@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Screening from "@/pages/screening";
 import Education from "@/pages/education";
 import Resources from "@/pages/resources";
+import Chatbot from "@/pages/chatbot";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/screening" component={Screening} />
       <Route path="/education" component={Education} />
       <Route path="/resources" component={Resources} />
+      <Route path="/chatbot" component={Chatbot} />
       <Route component={NotFound} />
     </Switch>
   );
