@@ -9,7 +9,7 @@ export async function registerRoutes(app: Express) {
     try {
       const { symptoms, riskFactors, riskLevel, recommendations } = req.body;
 
-      // Get AI-powered severity analysis
+      // Get AI-powered severity analysis with fallback
       const severityResult = await analyzeSeverity(symptoms, riskFactors);
 
       const data = insertScreeningSchema.parse({
@@ -17,12 +17,16 @@ export async function registerRoutes(app: Express) {
         riskFactors,
         riskLevel,
         recommendations,
-        severityAnalysis: severityResult.analysis,
-        severityScore: severityResult.score
+        severityAnalysis: severityResult.analysis || "Analysis unavailable",
+        severityScore: severityResult.score || 0
       });
 
       const result = await storage.createScreening(data);
-      res.json(result);
+      res.json({
+        ...result,
+        severityAnalysis: severityResult.analysis,
+        severityScore: severityResult.score
+      });
     } catch (error) {
       console.error("Screening error:", error);
       res.status(400).json({ error: "Invalid screening data" });

@@ -61,20 +61,23 @@ export default function Screening() {
       const riskLevel = calculateRiskLevel(data);
       console.log("Risk level:", riskLevel); // Debug log
       const recommendations = getRecommendations(riskLevel);
-      const severityAnalysis = "This is a placeholder for AI-generated severity analysis."; // Placeholder
-      const severityScore = 0.7; // Placeholder
 
-      await apiRequest("POST", "/api/screening", {
+      const response = await apiRequest("POST", "/api/screening", {
         ...data,
         riskLevel,
         recommendations,
-        severityAnalysis,
-        severityScore,
       });
+
+      const result = await response.json();
+
+      // Update form values with AI analysis results
+      setValue("severityAnalysis", result.severityAnalysis);
+      setValue("severityScore", result.severityScore);
 
       setResults(recommendations);
       setStep(3);
     } catch (error) {
+      console.error("Submission error:", error);
       toast({
         title: "Error",
         description: "Failed to submit screening. Please try again.",
