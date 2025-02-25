@@ -53,25 +53,25 @@ export default function Screening() {
     }
   }
 
-  function calculateRiskLevel(data: FormData): string {
-    const symptomCount = data.symptoms.length;
-    const riskFactorCount = data.riskFactors.length;
-    
-    if (symptomCount >= 3 && riskFactorCount >= 2) return "high";
-    if (symptomCount >= 2 || riskFactorCount >= 1) return "medium";
-    return "low";
-  }
+function calculateRiskLevel(data: FormData): string {
+  const symptomCount = data.symptoms.length;
+  const riskFactorCount = data.riskFactors.length;
 
-  function getRecommendations(riskLevel: string): string {
-    switch (riskLevel) {
-      case "high":
-        return "Based on your responses, we recommend immediate consultation with a healthcare provider for HIV testing.";
-      case "medium":
-        return "Consider scheduling an appointment with a healthcare provider to discuss your symptoms and risk factors.";
-      default:
-        return "Your risk appears to be low, but stay informed about HIV prevention and get regular check-ups.";
-    }
+  if (symptomCount >= 3 || riskFactorCount >= 2) return "high";
+  if (symptomCount >= 2 || riskFactorCount >= 1) return "medium";
+  return "low";
+}
+
+function getRecommendations(riskLevel: string): string {
+  switch (riskLevel) {
+    case "high":
+      return "Based on your responses, we strongly recommend immediate HIV testing and consultation with a healthcare provider. Multiple symptoms and risk factors indicate the need for prompt medical attention.";
+    case "medium":
+      return "Consider scheduling an appointment with a healthcare provider soon to discuss your symptoms and risk factors. Early testing is recommended for your peace of mind.";
+    default:
+      return "Your risk appears to be low, but it's still important to practice safe behaviors and get regular check-ups. Consider routine HIV testing as part of your healthcare.";
   }
+}
 
   return (
     <div className="mx-auto max-w-2xl">
