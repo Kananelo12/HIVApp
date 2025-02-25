@@ -1,4 +1,5 @@
 import { users, type User, type InsertUser } from "@shared/schema";
+import { type Screening, type InsertScreening } from "@shared/schema";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -7,14 +8,17 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createScreening(screening: InsertScreening): Promise<Screening>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private screenings: Map<number, Screening>;
   currentId: number;
 
   constructor() {
     this.users = new Map();
+    this.screenings = new Map();
     this.currentId = 1;
   }
 
@@ -33,6 +37,13 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
+  }
+
+  async createScreening(insertScreening: InsertScreening): Promise<Screening> {
+    const id = this.currentId++;
+    const screening: Screening = { id, ...insertScreening };
+    this.screenings.set(id, screening);
+    return screening;
   }
 }
 
