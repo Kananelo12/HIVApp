@@ -41,10 +41,17 @@ export default function Resources() {
               <p className="text-muted-foreground">
                 Find HIV testing locations near you using the CDC's testing locator:
               </p>
-              <Button className="w-full">
-                Find Testing Centers
-                <MapPin className="ml-2 h-4 w-4" />
-              </Button>
+              <a
+                href="https://gettested.cdc.gov/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button className="w-full">
+                  Find Testing Centers
+                  <MapPin className="ml-2 h-4 w-4" />
+                </Button>
+              </a>
             </div>
           </CardContent>
         </Card>
