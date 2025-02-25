@@ -20,13 +20,17 @@ export async function analyzeSeverity(symptoms: string[], riskFactors: string[])
       response_format: { type: "json_object" }
     });
 
-    return JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    return {
+      analysis: result.analysis || "Analysis unavailable",
+      score: Math.round(result.score || calculateBasicSeverityScore(symptoms.length, riskFactors.length))
+    };
   } catch (error) {
     console.error("OpenAI API error:", error);
     // Return a fallback response when API fails
     return {
       analysis: "Unable to perform AI analysis at this time. Please consult the risk level assessment and recommendations provided.",
-      score: calculateBasicSeverityScore(symptoms.length, riskFactors.length)
+      score: Math.round(calculateBasicSeverityScore(symptoms.length, riskFactors.length))
     };
   }
 }
@@ -42,5 +46,5 @@ function calculateBasicSeverityScore(symptomsCount: number, riskFactorsCount: nu
   const symptomScore = (symptomsCount / maxSymptoms) * symptomWeight * 10;
   const riskScore = (riskFactorsCount / maxRiskFactors) * riskFactorWeight * 10;
 
-  return Math.min(Math.round((symptomScore + riskScore) * 10) / 10, 10);
+  return Math.round(Math.min(Math.round(symptomScore + riskScore), 10));
 }

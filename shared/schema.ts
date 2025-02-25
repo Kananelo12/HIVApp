@@ -12,13 +12,8 @@ export const screenings = pgTable("screenings", {
   severityScore: integer("severity_score").notNull(),
 });
 
-export const insertScreeningSchema = createInsertSchema(screenings).pick({
-  symptoms: true,
-  riskFactors: true,
-  riskLevel: true,
-  recommendations: true,
-  severityAnalysis: true,
-  severityScore: true,
+export const insertScreeningSchema = createInsertSchema(screenings).extend({
+  severityScore: z.number().transform(val => Math.round(val)), // Convert float to integer
 });
 
 export type InsertScreening = z.infer<typeof insertScreeningSchema>;
