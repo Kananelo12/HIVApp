@@ -1,0 +1,150 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { symptomsList, riskFactorsList } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+
+const formSchema = z.object({
+  symptoms: z.array(z.string()),
+  riskFactors: z.array(z.string()),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+export default function Screening() {
+  const [step, setStep] = useState(1);
+  const [results, setResults] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      symptoms: [],
+      riskFactors: [],
+    },
+  });
+
+  async function onSubmit(data: FormData) {
+    try {
+      const riskLevel = calculateRiskLevel(data);
+      const recommendations = getRecommendations(riskLevel);
+
+      await apiRequest("POST", "/api/screening", {
+        ...data,
+        riskLevel,
+        recommendations,
+      });
+
+      setResults(recommendations);
+      setStep(3);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit screening. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  function calculateRiskLevel(data: FormData): string {
+    const symptomCount = data.symptoms.length;
+    const riskFactorCount = data.riskFactors.length;
+    
+    if (symptomCount >= 3 && riskFactorCount >= 2) return "high";
+    if (symptomCount >= 2 || riskFactorCount >= 1) return "medium";
+    return "low";
+  }
+
+  function getRecommendations(riskLevel: string): string {
+    switch (riskLevel) {
+      case "high":
+        return "Based on your responses, we recommend immediate consultation with a healthcare provider for HIV testing.";
+      case "medium":
+        return "Consider scheduling an appointment with a healthcare provider to discuss your symptoms and risk factors.";
+      default:
+        return "Your risk appears to be low, but stay informed about HIV prevention and get regular check-ups.";
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <Progress value={step * 33} className="mb-8" />
+
+      {step === 1 && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-6 text-2xl font-semibold">Symptom Check</h2>
+            <div className="space-y-4">
+              {symptomsList.map((symptom) => (
+                <div key={symptom} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={symptom}
+                    {...form.register("symptoms")}
+                    value={symptom}
+                  />
+                  <label htmlFor={symptom} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {symptom}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <Button className="mt-6" onClick={() => setStep(2)}>
+              Next
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 2 && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-6 text-2xl font-semibold">Risk Assessment</h2>
+            <div className="space-y-4">
+              {riskFactorsList.map((factor) => (
+                <div key={factor} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={factor}
+                    {...form.register("riskFactors")}
+                    value={factor}
+                  />
+                  <label htmlFor={factor} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {factor}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 space-x-4">
+              <Button variant="outline" onClick={() => setStep(1)}>
+                Back
+              </Button>
+              <Button onClick={form.handleSubmit(onSubmit)}>
+                Get Results
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 3 && results && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-6 text-2xl font-semibold">Results</h2>
+            <Alert>
+              <AlertDescription>{results}</AlertDescription>
+            </Alert>
+            <Button className="mt-6" onClick={() => setStep(1)}>
+              Start Over
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
