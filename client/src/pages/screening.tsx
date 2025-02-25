@@ -12,8 +12,8 @@ import { symptomsList, riskFactorsList } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 const formSchema = z.object({
-  symptoms: z.array(z.string()),
-  riskFactors: z.array(z.string()),
+  symptoms: z.array(z.string()).min(0),
+  riskFactors: z.array(z.string()).min(0),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -31,9 +31,31 @@ export default function Screening() {
     },
   });
 
+  const { setValue, watch } = form;
+  const symptoms = watch("symptoms");
+  const riskFactors = watch("riskFactors");
+
+  const toggleSymptom = (symptom: string, checked: boolean) => {
+    const currentSymptoms = symptoms || [];
+    const updatedSymptoms = checked
+      ? [...currentSymptoms, symptom]
+      : currentSymptoms.filter(s => s !== symptom);
+    setValue("symptoms", updatedSymptoms);
+  };
+
+  const toggleRiskFactor = (factor: string, checked: boolean) => {
+    const currentFactors = riskFactors || [];
+    const updatedFactors = checked
+      ? [...currentFactors, factor]
+      : currentFactors.filter(f => f !== factor);
+    setValue("riskFactors", updatedFactors);
+  };
+
   async function onSubmit(data: FormData) {
     try {
+      console.log("Form data:", data); // Debug log
       const riskLevel = calculateRiskLevel(data);
+      console.log("Risk level:", riskLevel); // Debug log
       const recommendations = getRecommendations(riskLevel);
 
       await apiRequest("POST", "/api/screening", {
@@ -53,25 +75,31 @@ export default function Screening() {
     }
   }
 
-function calculateRiskLevel(data: FormData): string {
-  const symptomCount = data.symptoms.length;
-  const riskFactorCount = data.riskFactors.length;
+  function calculateRiskLevel(data: FormData): string {
+    const symptomCount = data.symptoms.length;
+    const riskFactorCount = data.riskFactors.length;
 
-  if (symptomCount >= 3 || riskFactorCount >= 2) return "high";
-  if (symptomCount >= 2 || riskFactorCount >= 1) return "medium";
-  return "low";
-}
+    console.log(`Symptoms count: ${symptomCount}, Risk factors count: ${riskFactorCount}`); // Debug log
 
-function getRecommendations(riskLevel: string): string {
-  switch (riskLevel) {
-    case "high":
-      return "Based on your responses, we strongly recommend immediate HIV testing and consultation with a healthcare provider. Multiple symptoms and risk factors indicate the need for prompt medical attention.";
-    case "medium":
-      return "Consider scheduling an appointment with a healthcare provider soon to discuss your symptoms and risk factors. Early testing is recommended for your peace of mind.";
-    default:
-      return "Your risk appears to be low, but it's still important to practice safe behaviors and get regular check-ups. Consider routine HIV testing as part of your healthcare.";
+    if (symptomCount >= 3 || riskFactorCount >= 2) {
+      return "high";
+    }
+    if (symptomCount >= 2 || riskFactorCount >= 1) {
+      return "medium";
+    }
+    return "low";
   }
-}
+
+  function getRecommendations(riskLevel: string): string {
+    switch (riskLevel) {
+      case "high":
+        return "Based on your responses, we strongly recommend immediate HIV testing and consultation with a healthcare provider. Multiple symptoms and risk factors indicate the need for prompt medical attention.";
+      case "medium":
+        return "Consider scheduling an appointment with a healthcare provider soon to discuss your symptoms and risk factors. Early testing is recommended for your peace of mind.";
+      default:
+        return "Your risk appears to be low, but it's still important to practice safe behaviors and get regular check-ups. Consider routine HIV testing as part of your healthcare.";
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -86,8 +114,8 @@ function getRecommendations(riskLevel: string): string {
                 <div key={symptom} className="flex items-center space-x-2">
                   <Checkbox
                     id={symptom}
-                    {...form.register("symptoms")}
-                    value={symptom}
+                    checked={symptoms?.includes(symptom)}
+                    onCheckedChange={(checked) => toggleSymptom(symptom, checked as boolean)}
                   />
                   <label htmlFor={symptom} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {symptom}
@@ -111,8 +139,8 @@ function getRecommendations(riskLevel: string): string {
                 <div key={factor} className="flex items-center space-x-2">
                   <Checkbox
                     id={factor}
-                    {...form.register("riskFactors")}
-                    value={factor}
+                    checked={riskFactors?.includes(factor)}
+                    onCheckedChange={(checked) => toggleRiskFactor(factor, checked as boolean)}
                   />
                   <label htmlFor={factor} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {factor}
@@ -139,7 +167,10 @@ function getRecommendations(riskLevel: string): string {
             <Alert>
               <AlertDescription>{results}</AlertDescription>
             </Alert>
-            <Button className="mt-6" onClick={() => setStep(1)}>
+            <Button className="mt-6" onClick={() => {
+              form.reset();
+              setStep(1);
+            }}>
               Start Over
             </Button>
           </CardContent>
